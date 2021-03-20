@@ -1,0 +1,6 @@
+{
+    "name": "Vorwerk Integration",
+    "content_in_root": true,
+    "country": ["DE"],
+    "iot_class": ["Cloud Polling"]
+  }
