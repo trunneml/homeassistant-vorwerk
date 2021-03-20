@@ -58,7 +58,9 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
             description_placeholders={"docs_url": DOCS_URL},
         )
 
-    async def async_step_code(self, user_input: Dict[str, Any] = {}) -> Dict[str, Any]:
+    async def async_step_code(
+        self, user_input: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """Step when user enters OTP Code from email."""
         assert self._email is not None  # typing
         errors = {}
