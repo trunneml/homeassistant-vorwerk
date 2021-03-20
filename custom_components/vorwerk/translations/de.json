@@ -1,0 +1,29 @@
+{
+    "config": {
+      "step": {
+        "user": {
+          "title": "Vorwerk-Kontoinformationen",
+          "data": {
+            "email": "E-Mailaddresse"
+          },
+          "description": "Um einen Authentifizierungscode per E-Mail zu erhalten, gib die E-Mailadresse deines Vorwerk-Accounts ein.\n\nSiehe [Vorwerk-Dokumentation]({docs_url})."
+        },
+        "code": {
+          "title": "Vorwerk Account Info",
+          "data": {
+            "code": "Code"
+          },
+          "description": "Gib den per E-Mail erhaltenen Code ein.\n\nSee [Vorwerk documentation]({docs_url})."
+        }
+      },
+      },
+      "error": {
+        "invalid_auth": "Ung\u00fcltige Authentifizierung"
+      },
+      "abort": {
+        "invalid_auth": "Ung\u00fcltige Authentifizierung",
+        "already_configured": "Bereits konfiguriert"
+      }
+    },
+    "title": "Vorwerk Kobold"
+}

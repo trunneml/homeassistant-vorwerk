@@ -1,0 +1,28 @@
+{
+    "config": {
+      "step": {
+        "user": {
+          "title": "Vorwerk Account Info",
+          "data": {
+            "email": "Email"
+          },
+          "description": "To recieve an authentication code, enter the email address of your vorwerk account.\n\nSee [Vorwerk documentation]({docs_url})."
+        },
+        "code": {
+          "title": "Vorwerk Account Info",
+          "data": {
+            "code": "Code"
+          },
+          "description": "Enter the code you received by email.\n\nSee [Vorwerk documentation]({docs_url})."
+        }
+      },
+      "error": {
+        "invalid_auth": "Invalid authentication"
+      },
+      "abort": {
+        "already_configured": "Account is already configured",
+        "invalid_auth": "Invalid authentication"
+      }
+    },
+    "title": "Vorwerk Kobold"
+}
