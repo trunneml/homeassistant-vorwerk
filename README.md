@@ -10,3 +10,7 @@ With the new Vorwerk App and authentication the Home Assistant Neato component d
  
  - VR200
  - VR300 (without map sensors)
+
+ ## Installation
+
+ Use HACS or checkout this repository and copy the `custom_components/vorwerk` folder in your home assistant configuration under: `<HA config directory>/custom_components/<domain>`
