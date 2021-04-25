@@ -1,21 +1,25 @@
 """Support for Vorwerk Connected Vacuums switches."""
-from datetime import timedelta
 import logging
 
 from pybotvac.exceptions import NeatoRobotException
+from pybotvac.robot import Robot
 
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.helpers.entity import ToggleEntity
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+)
 
-from .const import SCAN_INTERVAL_MINUTES, VORWERK_DOMAIN, VORWERK_ROBOTS
+from .api import VorwerkState
+from .const import (
+    VORWERK_DOMAIN,
+    VORWERK_ROBOT_API,
+    VORWERK_ROBOT_COORDINATOR,
+    VORWERK_ROBOTS,
+)
 
 _LOGGER = logging.getLogger(__name__)
-
-SCAN_INTERVAL = timedelta(minutes=SCAN_INTERVAL_MINUTES)
-
-SWITCH_TYPE_SCHEDULE = "schedule"
-
-SWITCH_TYPES = {SWITCH_TYPE_SCHEDULE: ["Schedule"]}
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -23,9 +27,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
     _LOGGER.debug("Adding switches for vorwerk (%s)", entry.title)
 
     dev = [
-        VorwerkConnectedSwitch(robot, switch_type)
+        VorwerkScheduleSwitch(
+            robot[VORWERK_ROBOT_API], robot[VORWERK_ROBOT_COORDINATOR]
+        )
         for robot in hass.data[VORWERK_DOMAIN][entry.entry_id][VORWERK_ROBOTS]
-        for switch_type in SWITCH_TYPES
     ]
 
     if not dev:
@@ -34,45 +39,18 @@ async def async_setup_entry(hass, entry, async_add_entities):
     async_add_entities(dev, True)
 
 
-class VorwerkConnectedSwitch(ToggleEntity):
-    """Vorwerk Connected Switches."""
+class VorwerkScheduleSwitch(CoordinatorEntity, ToggleEntity):
+    """Vorwerk Schedule Switches."""
 
-    def __init__(self, robot, switch_type):
-        """Initialize the Vorwerk Connected switches."""
-        self.type = switch_type
-        self.robot = robot
-        self._available = False
-        self._robot_name = f"{self.robot.name} {SWITCH_TYPES[self.type][0]}"
-        self._state = None
-        self._schedule_state = None
-        self._clean_state = None
+    def __init__(
+        self, robot_state: VorwerkState, coordinator: DataUpdateCoordinator
+    ) -> None:
+        """Initialize the Vorwerk Schedule switch."""
+        super().__init__(coordinator)
+        self.robot: Robot = robot_state.robot
+        self._robot_name = f"{self.robot.name} Schedule"
+        self._state: VorwerkState = robot_state
         self._robot_serial = self.robot.serial
-
-    def update(self):
-        """Update the states of Vorwerk switches."""
-        _LOGGER.debug("Running Vorwerk switch update for '%s'", self.entity_id)
-        try:
-            self._state = self.robot.state
-        except NeatoRobotException as ex:
-            if self._available:  # Print only once when available
-                _LOGGER.error(
-                    "Vorwerk switch connection error for '%s': %s", self.entity_id, ex
-                )
-            self._state = None
-            self._available = False
-            return
-
-        self._available = True
-        _LOGGER.debug("self._state=%s", self._state)
-        if self.type == SWITCH_TYPE_SCHEDULE:
-            _LOGGER.debug("State: %s", self._state)
-            if self._state["details"]["isScheduleEnabled"]:
-                self._schedule_state = STATE_ON
-            else:
-                self._schedule_state = STATE_OFF
-            _LOGGER.debug(
-                "Schedule state for '%s': %s", self.entity_id, self._schedule_state
-            )
 
     @property
     def name(self):
@@ -82,7 +60,7 @@ class VorwerkConnectedSwitch(ToggleEntity):
     @property
     def available(self):
         """Return True if entity is available."""
-        return self._available
+        return self._state.available
 
     @property
     def unique_id(self):
@@ -92,19 +70,21 @@ class VorwerkConnectedSwitch(ToggleEntity):
     @property
     def is_on(self):
         """Return true if switch is on."""
-        if self.type == SWITCH_TYPE_SCHEDULE:
-            if self._schedule_state == STATE_ON:
-                return True
-            return False
+        if self._state.available:
+            if self._state.scheduleEnabled:
+                return STATE_ON
+            else:
+                return STATE_OFF
 
     @property
     def device_info(self):
         """Device info for robot."""
-        return {"identifiers": {(VORWERK_DOMAIN, self._robot_serial)}}
+        return self._state.device_info
 
-    def turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs):
         """Turn the switch on."""
-        if self.type == SWITCH_TYPE_SCHEDULE:
+
+        def turn_on():
             try:
                 self.robot.enable_schedule()
             except NeatoRobotException as ex:
@@ -112,12 +92,19 @@ class VorwerkConnectedSwitch(ToggleEntity):
                     "Vorwerk switch connection error '%s': %s", self.entity_id, ex
                 )
 
-    def turn_off(self, **kwargs):
+        await self.hass.async_add_executor_job(turn_on)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs):
         """Turn the switch off."""
-        if self.type == SWITCH_TYPE_SCHEDULE:
+
+        def turn_off():
             try:
                 self.robot.disable_schedule()
             except NeatoRobotException as ex:
                 _LOGGER.error(
                     "Vorwerk switch connection error '%s': %s", self.entity_id, ex
                 )
+
+        await self.hass.async_add_executor_job(turn_off)
+        await self.coordinator.async_request_refresh()

@@ -1,8 +1,11 @@
 """Constants for Vorwerk integration."""
+from datetime import timedelta
 
 VORWERK_DOMAIN = "vorwerk"
 
 VORWERK_ROBOTS = "robots"
+VORWERK_ROBOT_API = "robot_api"
+VORWERK_ROBOT_COORDINATOR = "robot_coordinator"
 
 VORWERK_ROBOT_NAME = "name"
 VORWERK_ROBOT_SERIAL = "serial"
@@ -12,7 +15,7 @@ VORWERK_ROBOT_ENDPOINT = "endpoint"
 
 VORWERK_PLATFORMS = ["vacuum", "switch", "sensor"]
 
-SCAN_INTERVAL_MINUTES = 1
+MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=1)
 
 MODE = {1: "Eco", 2: "Turbo"}
 
@@ -162,3 +165,19 @@ ATTR_CLEAN_SUSP_TIME = "clean_suspension_time"
 ATTR_CLEAN_PAUSE_TIME = "clean_pause_time"
 ATTR_CLEAN_ERROR_TIME = "clean_error_time"
 ATTR_LAUNCHED_FROM = "launched_from"
+
+ATTR_NAVIGATION = "navigation"
+ATTR_CATEGORY = "category"
+ATTR_ZONE = "zone"
+
+
+ROBOT_STATE_INVALID = 0
+ROBOT_STATE_IDLE = 1
+ROBOT_STATE_BUSY = 2
+ROBOT_STATE_PAUSE = 3
+ROBOT_STATE_ERROR = 4
+
+ROBOT_ACTION_HOUSE_CLEANING = 1
+ROBOT_ACTION_SPOT_CLEANING = 2
+ROBOT_ACTION_MANUAL_CLEANING = 3
+ROBOT_ACTION_DOCKING = 4

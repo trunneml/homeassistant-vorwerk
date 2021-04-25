@@ -12,11 +12,16 @@ from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.exceptions import ConfigEntryNotReady
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import ConfigType, HomeAssistantType
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import Throttle
 
+from .api import VorwerkState
 from .const import (
+    MIN_TIME_BETWEEN_UPDATES,
     VORWERK_DOMAIN,
     VORWERK_PLATFORMS,
+    VORWERK_ROBOT_API,
+    VORWERK_ROBOT_COORDINATOR,
     VORWERK_ROBOT_ENDPOINT,
     VORWERK_ROBOT_NAME,
     VORWERK_ROBOT_SECRET,
@@ -65,7 +70,45 @@ async def async_setup(hass: HomeAssistantType, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool:
     """Set up config entry."""
+    robots = await _async_create_robots(hass, entry.data[VORWERK_ROBOTS])
 
+    robot_states = [ VorwerkState(robot) for robot in robots ]
+
+    hass.data[VORWERK_DOMAIN][entry.entry_id] = {
+        VORWERK_ROBOTS: [
+            {
+                VORWERK_ROBOT_API: r,
+                VORWERK_ROBOT_COORDINATOR: _create_coordinator(hass, r),
+            }
+            for r in robot_states
+        ]
+    }
+
+    for component in VORWERK_PLATFORMS:
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(entry, component)
+        )
+
+    return True
+
+
+def _create_coordinator(
+    hass: HomeAssistantType, robot_state: VorwerkState
+) -> DataUpdateCoordinator:
+    async def async_update_data():
+        """Fetch data from API endpoint."""
+        await hass.async_add_executor_job(robot_state.update)
+
+    return DataUpdateCoordinator(
+        hass,
+        _LOGGER,
+        name=robot_state.robot.name,
+        update_method=async_update_data,
+        update_interval=MIN_TIME_BETWEEN_UPDATES,
+    )
+
+
+async def _async_create_robots(hass, robot_confs):
     @Throttle(timedelta(minutes=1))
     def create_robot(config):
         return Robot(
@@ -77,27 +120,19 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool
             endpoint=config[VORWERK_ROBOT_ENDPOINT],
         )
 
+    robots = []
     try:
         robots = await asyncio.gather(
             *(
                 hass.async_add_executor_job(create_robot, robot_conf)
-                for robot_conf in entry.data[VORWERK_ROBOTS]
+                for robot_conf in robot_confs
             ),
             return_exceptions=False,
         )
-        hass.data[VORWERK_DOMAIN][entry.entry_id] = {VORWERK_ROBOTS: robots}
     except NeatoException as ex:
-        _LOGGER.warning(
-            "Failed to connect to robot %s: %s", entry.data[VORWERK_ROBOT_NAME], ex
-        )
+        _LOGGER.error("Failed to connect to robots: %s", ex)
         raise ConfigEntryNotReady from ex
-
-    for component in VORWERK_PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, component)
-        )
-
-    return True
+    return robots
 
 
 async def async_unload_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool:

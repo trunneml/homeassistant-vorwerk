@@ -1,18 +1,26 @@
 """Support for Vorwerk sensors."""
-from datetime import timedelta
 import logging
 
-from pybotvac.exceptions import NeatoRobotException
+from pybotvac.robot import Robot
 
 from homeassistant.components.sensor import DEVICE_CLASS_BATTERY
 from homeassistant.const import PERCENTAGE
 from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+)
 
-from .const import SCAN_INTERVAL_MINUTES, VORWERK_DOMAIN, VORWERK_ROBOTS
+from .api import VorwerkState
+from .const import (
+    VORWERK_DOMAIN,
+    VORWERK_ROBOT_API,
+    VORWERK_ROBOT_COORDINATOR,
+    VORWERK_ROBOTS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(minutes=SCAN_INTERVAL_MINUTES)
 
 BATTERY = "Battery"
 
@@ -22,39 +30,25 @@ async def async_setup_entry(hass, entry, async_add_entities):
     _LOGGER.debug("Adding sensors for vorwerk robots")
     async_add_entities(
         [
-            VorwerkSensor(robot)
+            VorwerkSensor(robot[VORWERK_ROBOT_API], robot[VORWERK_ROBOT_COORDINATOR])
             for robot in hass.data[VORWERK_DOMAIN][entry.entry_id][VORWERK_ROBOTS]
         ],
         True,
     )
 
 
-class VorwerkSensor(Entity):
+class VorwerkSensor(CoordinatorEntity, Entity):
     """Vorwerk sensor."""
 
-    def __init__(self, robot):
+    def __init__(
+        self, robot_state: VorwerkState, coordinator: DataUpdateCoordinator
+    ) -> None:
         """Initialize Vorwerk sensor."""
-        self.robot = robot
-        self._available = False
+        super().__init__(coordinator)
+        self.robot: Robot = robot_state.robot
+        self._state: VorwerkState = robot_state
         self._robot_name = f"{self.robot.name} {BATTERY}"
         self._robot_serial = self.robot.serial
-        self._state = None
-
-    def update(self):
-        """Update Vorwerk Sensor."""
-        try:
-            self._state = self.robot.state
-        except NeatoRobotException as ex:
-            if self._available:
-                _LOGGER.error(
-                    "Vorwerk sensor connection error for '%s': %s", self.entity_id, ex
-                )
-            self._state = None
-            self._available = False
-            return
-
-        self._available = True
-        _LOGGER.debug("self._state=%s", self._state)
 
     @property
     def name(self):
@@ -74,12 +68,12 @@ class VorwerkSensor(Entity):
     @property
     def available(self):
         """Return availability."""
-        return self._available
+        return self._state.available
 
     @property
     def state(self):
         """Return the state."""
-        return self._state["details"]["charge"]
+        return self._state.battery_level
 
     @property
     def unit_of_measurement(self):
@@ -89,4 +83,4 @@ class VorwerkSensor(Entity):
     @property
     def device_info(self):
         """Device info for robot."""
-        return {"identifiers": {(VORWERK_DOMAIN, self._robot_serial)}}
+        return self._state.device_info

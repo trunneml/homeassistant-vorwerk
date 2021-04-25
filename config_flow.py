@@ -9,7 +9,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_CODE, CONF_EMAIL, CONF_TOKEN
 
-from . import authsession
+from . import api
 
 # pylint: disable=unused-import
 from .const import (
@@ -36,7 +36,7 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
     def __init__(self):
         """Initialize the config flow."""
         self._email: Optional[str] = None
-        self._session = authsession.VorwerkSession()
+        self._session = api.VorwerkSession()
 
     async def async_step_user(self, user_input=None):
         """Step when user initializes a integration."""
@@ -67,7 +67,9 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
         code = user_input.get(CONF_CODE) if user_input else None
         if code:
             try:
-                robots = await self.async_get_robots(self._email, code)
+                robots = await self.hass.async_add_executor_job(
+                    self._get_robots, self._email, code
+                )
                 return self.async_create_entry(
                     title=self._email,
                     data={
@@ -79,7 +81,10 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
             except (HTTPError, NeatoException):
                 errors["base"] = "invalid_auth"
 
-        self._session.send_email_otp(self._email)
+        await self.hass.async_add_executor_job(
+            self._session.send_email_otp, self._email
+        )
+
         return self.async_show_form(
             step_id="code",
             data_schema=vol.Schema(
@@ -105,7 +110,7 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
             data=data,
         )
 
-    async def async_get_robots(self, email: str, code: str):
+    def _get_robots(self, email: str, code: str):
         """Fetch the robot list from vorwerk."""
         self._session.fetch_token_passwordless(email, code)
         return [
