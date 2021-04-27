@@ -155,17 +155,6 @@ ALERTS = {
     "log_upload_failed": "Logs failed to upload",
 }
 
-ATTR_CLEAN_START = "clean_start"
-ATTR_CLEAN_STOP = "clean_stop"
-ATTR_CLEAN_AREA = "clean_area"
-ATTR_CLEAN_BATTERY_START = "battery_level_at_clean_start"
-ATTR_CLEAN_BATTERY_END = "battery_level_at_clean_end"
-ATTR_CLEAN_SUSP_COUNT = "clean_suspension_count"
-ATTR_CLEAN_SUSP_TIME = "clean_suspension_time"
-ATTR_CLEAN_PAUSE_TIME = "clean_pause_time"
-ATTR_CLEAN_ERROR_TIME = "clean_error_time"
-ATTR_LAUNCHED_FROM = "launched_from"
-
 ATTR_NAVIGATION = "navigation"
 ATTR_CATEGORY = "category"
 ATTR_ZONE = "zone"

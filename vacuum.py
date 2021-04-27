@@ -32,16 +32,6 @@ from homeassistant.helpers.update_coordinator import (
 from .api import VorwerkState
 from .const import (
     ATTR_CATEGORY,
-    ATTR_CLEAN_AREA,
-    ATTR_CLEAN_BATTERY_END,
-    ATTR_CLEAN_BATTERY_START,
-    ATTR_CLEAN_ERROR_TIME,
-    ATTR_CLEAN_PAUSE_TIME,
-    ATTR_CLEAN_START,
-    ATTR_CLEAN_STOP,
-    ATTR_CLEAN_SUSP_COUNT,
-    ATTR_CLEAN_SUSP_TIME,
-    ATTR_LAUNCHED_FROM,
     ATTR_NAVIGATION,
     ATTR_ZONE,
     VORWERK_DOMAIN,
@@ -107,20 +97,6 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
 
         self._name = f"{self.robot.name}"
         self._robot_serial = self.robot.serial
-
-        # Variables form neato impl
-        # We keep it here for later implementations
-        self._clean_state = None
-        self._clean_time_start = None
-        self._clean_time_stop = None
-        self._clean_area = None
-        self._clean_battery_start = None
-        self._clean_battery_end = None
-        self._clean_susp_charge_count = None
-        self._clean_susp_time = None
-        self._clean_pause_time = None
-        self._clean_error_time = None
-        self._launched_from = None
         self._robot_boundaries = []
 
     @property
@@ -165,26 +141,6 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
 
         if self._state.status is not None:
             data[ATTR_STATUS] = self._state.status
-        if self._clean_time_start is not None:
-            data[ATTR_CLEAN_START] = self._clean_time_start
-        if self._clean_time_stop is not None:
-            data[ATTR_CLEAN_STOP] = self._clean_time_stop
-        if self._clean_area is not None:
-            data[ATTR_CLEAN_AREA] = self._clean_area
-        if self._clean_susp_charge_count is not None:
-            data[ATTR_CLEAN_SUSP_COUNT] = self._clean_susp_charge_count
-        if self._clean_susp_time is not None:
-            data[ATTR_CLEAN_SUSP_TIME] = self._clean_susp_time
-        if self._clean_pause_time is not None:
-            data[ATTR_CLEAN_PAUSE_TIME] = self._clean_pause_time
-        if self._clean_error_time is not None:
-            data[ATTR_CLEAN_ERROR_TIME] = self._clean_error_time
-        if self._clean_battery_start is not None:
-            data[ATTR_CLEAN_BATTERY_START] = self._clean_battery_start
-        if self._clean_battery_end is not None:
-            data[ATTR_CLEAN_BATTERY_END] = self._clean_battery_end
-        if self._launched_from is not None:
-            data[ATTR_LAUNCHED_FROM] = self._launched_from
 
         return data
 
