@@ -1,6 +1,8 @@
 """Config flow to configure Vorwerk integration."""
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pybotvac.exceptions import NeatoException
 from requests.models import HTTPError
@@ -35,7 +37,7 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
 
     def __init__(self):
         """Initialize the config flow."""
-        self._email: Optional[str] = None
+        self._email: str | None = None
         self._session = api.VorwerkSession()
 
     async def async_step_user(self, user_input=None):
@@ -59,8 +61,8 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
         )
 
     async def async_step_code(
-        self, user_input: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+        self, user_input: dict[str, Any] = None
+    ) -> dict[str, Any]:
         """Step when user enters OTP Code from email."""
         assert self._email is not None  # typing
         errors = {}
@@ -96,7 +98,7 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
             errors=errors,
         )
 
-    async def async_step_import(self, user_input: Dict[str, Any]) -> Dict[str, Any]:
+    async def async_step_import(self, user_input: dict[str, Any]) -> dict[str, Any]:
         """Import a config flow from configuration."""
         unique_id = "from configuration"
         data = {VORWERK_ROBOTS: user_input}

@@ -1,7 +1,8 @@
 """Auth sessions for pybotvac."""
+from __future__ import annotations
+
 from functools import wraps
 import logging
-from typing import Optional
 
 import pybotvac
 from pybotvac.exceptions import NeatoRobotException
@@ -47,15 +48,14 @@ class VorwerkSession(pybotvac.PasswordlessSession):
         return self._token
 
 
-def when_available(f):
+def when_available(func):
     """Prevent calling the method and return None when not available."""
 
-    @wraps(f)
+    @wraps(func)
     def wrapper(self, *args, **kw):
-        if self.available:
-            return f(self, *args, **kw)
-        else:
+        if not self.available:
             return None
+        return func(self, *args, **kw)
 
     return wrapper
 
@@ -98,11 +98,9 @@ class VorwerkState:
             self.robot_state = {}
             return
 
-        self._available = True
-
     @property
     @when_available
-    def docked(self) -> Optional[bool]:
+    def docked(self):
         """Vacuum is docked."""
         return (
             self.robot_state["state"] == ROBOT_STATE_IDLE
@@ -111,7 +109,7 @@ class VorwerkState:
 
     @property
     @when_available
-    def charging(self) -> Optional[bool]:
+    def charging(self):
         """Vacuum is charging."""
         return (
             self.robot_state.get("state") == ROBOT_STATE_IDLE
@@ -120,27 +118,28 @@ class VorwerkState:
 
     @property
     @when_available
-    def state(self) -> Optional[str]:
+    def state(self) -> str | None:
         """Return Home Assistant vacuum state."""
         robot_state = self.robot_state.get("state")
+        state = None
         if self.charging or self.docked:
-            return STATE_DOCKED
+            state = STATE_DOCKED
         elif robot_state == ROBOT_STATE_IDLE:
-            return STATE_IDLE
+            state = STATE_IDLE
         elif robot_state == ROBOT_STATE_BUSY:
             if robot_state["action"] != ROBOT_ACTION_DOCKING:
-                return STATE_RETURNING
+                state = STATE_RETURNING
             else:
-                return STATE_CLEANING
+                state = STATE_CLEANING
         elif robot_state == ROBOT_STATE_PAUSE:
-            return STATE_PAUSED
+            state = STATE_PAUSED
         elif robot_state == ROBOT_STATE_ERROR:
-            return STATE_ERROR
-        return None
+            state = STATE_ERROR
+        return state
 
     @property
     @when_available
-    def alert(self) -> Optional[str]:
+    def alert(self) -> str | None:
         """Return vacuum alert message."""
         if "alert" in self.robot_state:
             return ALERTS.get(self.robot_state["alert"], self.robot_state["alert"])
@@ -148,7 +147,7 @@ class VorwerkState:
 
     @property
     @when_available
-    def status(self) -> Optional[str]:
+    def status(self) -> str | None:
         """Return vacuum status message."""
         status = None
 
@@ -210,6 +209,6 @@ class VorwerkState:
 
     @property
     @when_available
-    def scheduleEnabled(self) -> Optional[bool]:
+    def schedule_enabled(self):
         """Return True when schedule is enabled."""
         return bool(self.robot_state["details"]["isScheduleEnabled"])
