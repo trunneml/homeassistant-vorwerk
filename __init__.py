@@ -1,6 +1,5 @@
 """Support for botvac connected Vorwerk vacuum cleaners."""
 import asyncio
-from datetime import timedelta
 import logging
 
 from pybotvac.exceptions import NeatoException
@@ -13,7 +12,6 @@ from homeassistant.exceptions import ConfigEntryNotReady
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import ConfigType, HomeAssistantType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.util import Throttle
 
 from .api import VorwerkState
 from .const import (
@@ -72,7 +70,7 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool
     """Set up config entry."""
     robots = await _async_create_robots(hass, entry.data[VORWERK_ROBOTS])
 
-    robot_states = [ VorwerkState(robot) for robot in robots ]
+    robot_states = [VorwerkState(robot) for robot in robots]
 
     hass.data[VORWERK_DOMAIN][entry.entry_id] = {
         VORWERK_ROBOTS: [
@@ -109,7 +107,6 @@ def _create_coordinator(
 
 
 async def _async_create_robots(hass, robot_confs):
-    @Throttle(timedelta(minutes=1))
     def create_robot(config):
         return Robot(
             serial=config[VORWERK_ROBOT_SERIAL],
