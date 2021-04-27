@@ -69,6 +69,7 @@ class VorwerkState:
         self.robot_state = {}
         self.robot_info = {}
 
+    @property
     def available(self) -> bool:
         """Return true when robot state is available."""
         return bool(self.robot_state)
