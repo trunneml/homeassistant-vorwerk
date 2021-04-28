@@ -1,4 +1,6 @@
 """Support for Neato Connected Vacuums."""
+from __future__ import annotations
+
 import logging
 from typing import Any
 
@@ -96,7 +98,7 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
 
         self._name = f"{self.robot.name}"
         self._robot_serial = self.robot.serial
-        self._robot_boundaries = []
+        self._robot_boundaries: list[str] = []
 
     @property
     def name(self):
