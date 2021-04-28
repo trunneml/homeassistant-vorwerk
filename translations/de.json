@@ -16,7 +16,6 @@
           "description": "Gib den per E-Mail erhaltenen Code ein.\n\nSee [Vorwerk documentation]({docs_url})."
         }
       },
-      },
       "error": {
         "invalid_auth": "Ung\u00fcltige Authentifizierung"
       },
