@@ -10,7 +10,6 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_CODE, CONF_EMAIL, CONF_TOKEN
-from homeassistant.data_entry_flow import FlowResultDict
 
 from . import api
 
@@ -62,8 +61,8 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
         )
 
     async def async_step_code(
-        self, user_input: dict[str, Any] = None
-    ) -> FlowResultDict:
+        self, user_input = None
+    ):
         """Step when user enters OTP Code from email."""
         assert self._email is not None  # typing
         errors = {}
@@ -99,7 +98,7 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
             errors=errors,
         )
 
-    async def async_step_import(self, user_input: dict[str, Any]) -> FlowResultDict:
+    async def async_step_import(self, user_input):
         """Import a config flow from configuration."""
         unique_id = "from configuration"
         data = {VORWERK_ROBOTS: user_input}
