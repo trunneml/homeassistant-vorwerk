@@ -279,6 +279,8 @@ class VorwerkState:
             status = self._cleaning_status()
         elif self.state == STATE_PAUSED:
             status = "Paused"
+        elif self.state == STATE_RETURNING:
+            status = "Returning"
 
         return status
 
