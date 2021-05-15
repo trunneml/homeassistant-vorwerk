@@ -188,7 +188,7 @@ class VorwerkState:
 
     def _update_state(self):
         try:
-            if self.robot_info is None:
+            if not self.robot_info:
                 self.robot_info = self.robot.get_general_info().json().get("data")
         except NeatoRobotException:
             _LOGGER.warning("Couldn't fetch robot information of %s", self.robot.name)
