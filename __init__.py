@@ -30,7 +30,7 @@ from .const import (
     ERRORS,
     MIN_TIME_BETWEEN_UPDATES,
     MODE,
-    ROBOT_ACTION_DOCKING,
+    ROBOT_CLEANING_ACTIONS,
     ROBOT_STATE_BUSY,
     ROBOT_STATE_ERROR,
     ROBOT_STATE_IDLE,
@@ -186,16 +186,17 @@ class VorwerkState:
         self._update_robot_info()
         self._update_state()
 
-    def _update_state(self):
+    def _update_robot_info(self):
         try:
             if not self.robot_info:
                 self.robot_info = self.robot.get_general_info().json().get("data")
         except NeatoRobotException:
             _LOGGER.warning("Couldn't fetch robot information of %s", self.robot.name)
 
-    def _update_robot_info(self):
+    def _update_state(self):
         try:
             self.robot_state = self.robot.state
+            _LOGGER.debug(self.robot_state)
         except NeatoRobotException as ex:
             if self.available:  # print only once when available
                 _LOGGER.error(
@@ -236,10 +237,11 @@ class VorwerkState:
         elif robot_state == ROBOT_STATE_IDLE:
             state = STATE_IDLE
         elif robot_state == ROBOT_STATE_BUSY:
-            if robot_state["action"] != ROBOT_ACTION_DOCKING:
-                state = STATE_RETURNING
-            else:
+            action = self.robot_state.get("action")
+            if action in ROBOT_CLEANING_ACTIONS:
                 state = STATE_CLEANING
+            else:
+                state = STATE_RETURNING
         elif robot_state == ROBOT_STATE_PAUSE:
             state = STATE_PAUSED
         elif robot_state == ROBOT_STATE_ERROR:
@@ -282,21 +284,19 @@ class VorwerkState:
 
     def _error_status(self):
         """Return error status."""
-        robot_state = self.robot_state.get("state")
-        return ERRORS.get(robot_state["error"], robot_state["error"])
+        return ERRORS.get(self.robot_state["error"], self.robot_state["error"])
 
     def _cleaning_status(self):
         """Return cleaning status."""
-        robot_state = self.robot_state.get("state")
         status_items = [
-            MODE.get(robot_state["cleaning"]["mode"]),
-            ACTION.get(robot_state["action"]),
+            MODE.get(self.robot_state["cleaning"]["mode"]),
+            ACTION.get(self.robot_state["action"]),
         ]
         if (
-            "boundary" in robot_state["cleaning"]
-            and "name" in robot_state["cleaning"]["boundary"]
+            "boundary" in self.robot_state["cleaning"]
+            and "name" in self.robot_state["cleaning"]["boundary"]
         ):
-            status_items.append(robot_state["cleaning"]["boundary"]["name"])
+            status_items.append(self.robot_state["cleaning"]["boundary"]["name"])
         return " ".join(s for s in status_items if s)
 
     @property
