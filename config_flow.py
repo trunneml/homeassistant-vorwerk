@@ -24,8 +24,6 @@ from .const import (
     VORWERK_ROBOTS,
 )
 
-DOCS_URL = "https://www.home-assistant.io/integrations/vorwerk"
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -57,7 +55,6 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
                     vol.Required(CONF_EMAIL): str,
                 }
             ),
-            description_placeholders={"docs_url": DOCS_URL},
         )
 
     async def async_step_code(
@@ -94,7 +91,6 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
                     vol.Required(CONF_CODE): str,
                 }
             ),
-            description_placeholders={"docs_url": DOCS_URL},
             errors=errors,
         )
 
