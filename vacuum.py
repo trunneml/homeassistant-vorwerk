@@ -30,7 +30,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
-from .api import VorwerkState
+from . import VorwerkState
 from .const import (
     ATTR_CATEGORY,
     ATTR_NAVIGATION,

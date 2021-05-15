@@ -11,7 +11,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
-from .api import VorwerkState
+from . import VorwerkState
 from .const import (
     VORWERK_DOMAIN,
     VORWERK_ROBOT_API,

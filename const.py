@@ -15,6 +15,9 @@ VORWERK_ROBOT_ENDPOINT = "endpoint"
 
 VORWERK_PLATFORMS = ["vacuum", "switch", "sensor"]
 
+# The client_id is the same for all users.
+VORWERK_CLIENT_ID = "KY4YbVAvtgB7lp8vIbWQ7zLk3hssZlhR"
+
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=1)
 
 MODE = {1: "Eco", 2: "Turbo"}
