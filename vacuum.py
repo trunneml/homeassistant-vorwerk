@@ -11,6 +11,7 @@ import voluptuous as vol
 from homeassistant.components.vacuum import (
     ATTR_STATUS,
     STATE_CLEANING,
+    STATE_DOCKED,
     STATE_IDLE,
     STATE_PAUSED,
     SUPPORT_BATTERY,
@@ -155,7 +156,7 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
         if not self._state:
             return
         try:
-            if self._state.state == STATE_IDLE:
+            if self._state.state == STATE_IDLE or self._state.state == STATE_DOCKED:
                 self.robot.start_cleaning()
             elif self._state.state == STATE_PAUSED:
                 self.robot.resume_cleaning()
