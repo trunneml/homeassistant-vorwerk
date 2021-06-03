@@ -70,11 +70,7 @@ class VorwerkScheduleSwitch(CoordinatorEntity, ToggleEntity):
     @property
     def is_on(self):
         """Return true if switch is on."""
-        if self._state.available:
-            if self._state.schedule_enabled:
-                return STATE_ON
-            else:
-                return STATE_OFF
+        return bool(self._state.schedule_enabled)
 
     @property
     def device_info(self):
