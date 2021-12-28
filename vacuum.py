@@ -31,6 +31,7 @@ from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
 )
+
 from . import VorwerkState
 from .const import (
     ATTR_CATEGORY,
@@ -99,7 +100,7 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
 
         self._name = f"{self.robot.name}"
         self._robot_serial = self.robot.serial
-        self._robot_boundaries: list[str] = []
+        self._robot_boundaries: list = []
 
     @property
     def name(self) -> str:
