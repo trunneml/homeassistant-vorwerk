@@ -156,7 +156,7 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
         if not self._state:
             return
         try:
-            if self._state.state == STATE_IDLE:
+            if self._state.state == STATE_IDLE or self._state.state == STATE_DOCKED:
                 self.robot.start_cleaning()
             elif self._state.state == STATE_PAUSED:
                 self.robot.resume_cleaning()
@@ -177,7 +177,7 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
     def return_to_base(self, **kwargs: Any) -> None:
         """Set the vacuum cleaner to return to the dock."""
         try:
-            if self._state.state == STATE_CLEANING or self._state.state == STATE_DOCKED:
+            if self._state.state == STATE_CLEANING:
                 self.robot.pause_cleaning()
             self.robot.send_to_base()
         except NeatoRobotException as ex:
