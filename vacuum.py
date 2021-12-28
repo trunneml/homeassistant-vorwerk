@@ -11,6 +11,7 @@ import voluptuous as vol
 from homeassistant.components.vacuum import (
     ATTR_STATUS,
     STATE_CLEANING,
+    STATE_DOCKED,
     STATE_IDLE,
     STATE_PAUSED,
     SUPPORT_BATTERY,
@@ -176,7 +177,7 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
     def return_to_base(self, **kwargs: Any) -> None:
         """Set the vacuum cleaner to return to the dock."""
         try:
-            if self._state.state == STATE_CLEANING:
+            if self._state.state == STATE_CLEANING or self._state.state == STATE_DOCKED:
                 self.robot.pause_cleaning()
             self.robot.send_to_base()
         except NeatoRobotException as ex:
