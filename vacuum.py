@@ -104,7 +104,6 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
 
         self._name = f"{self.robot.name}"
         self._robot_serial = self.robot.serial
-        self._robot_boundaries: list[str] = []
         self._token = token
 
     @property
@@ -284,24 +283,3 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
             _LOGGER.error(
                 "Vorwerk vacuum connection error for '%s': %s", self.entity_id, ex
             )
-
-
-        # TODO: OLD CODE
-#        boundary_id = None
-#        if zone is not None:
-#            for boundary in self._robot_boundaries:
-#                if zone in boundary["name"]:
-#                    boundary_id = boundary["id"]
-#            if boundary_id is None:
-#                _LOGGER.error(
-#                    "Zone '%s' was not found for the robot '%s'", zone, self.entity_id
-#                )
-#                return
-#            _LOGGER.info("Start cleaning zone '%s' with robot %s", zone, self.entity_id)
-
-#        try:
-#            self.robot.start_cleaning(mode, navigation, category, boundary_id)
-#        except NeatoRobotException as ex:
-#            _LOGGER.error(
-#                "Vorwerk vacuum connection error for '%s': %s", self.entity_id, ex
-#            )

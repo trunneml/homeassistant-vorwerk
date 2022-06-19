@@ -2,16 +2,17 @@
   "domain": "vorwerk",
   "name": "Vorwerk Kobold",
   "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/vorwerk",
+  "documentation": "https://github.com/trunneml/homeassistant-vorwerk",
   "requirements": [
     "pybotvac==0.0.23"
   ],
   "codeowners": [
-    "@trunneml"
+    "@trunneml",
+    "@fuempel"
   ],
   "dependencies": [
     "http"
   ],
   "iot_class": "cloud_polling",
-  "version": "0.9.6"
+  "version": "0.10.0"
 }
