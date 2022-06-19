@@ -5,6 +5,8 @@ import logging
 from typing import Any
 
 from pybotvac import Robot
+from pybotvac.session import PasswordlessSession
+from pybotvac.account import Account
 from pybotvac.exceptions import NeatoRobotException
 import voluptuous as vol
 
@@ -24,23 +26,24 @@ from homeassistant.components.vacuum import (
     SUPPORT_STOP,
     StateVacuumEntity,
 )
-from homeassistant.const import ATTR_MODE
+from homeassistant.const import ATTR_MODE, CONF_TOKEN
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
 )
-
 from . import VorwerkState
 from .const import (
     ATTR_CATEGORY,
     ATTR_NAVIGATION,
     ATTR_ZONE,
+    ATTR_MAP,
     VORWERK_DOMAIN,
     VORWERK_ROBOT_API,
     VORWERK_ROBOT_COORDINATOR,
     VORWERK_ROBOTS,
+    VORWERK_CLIENT_ID,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -65,7 +68,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     async_add_entities(
         [
             VorwerkConnectedVacuum(
-                robot[VORWERK_ROBOT_API], robot[VORWERK_ROBOT_COORDINATOR]
+                robot[VORWERK_ROBOT_API], robot[VORWERK_ROBOT_COORDINATOR], robot[CONF_TOKEN]
             )
             for robot in hass.data[VORWERK_DOMAIN][entry.entry_id][VORWERK_ROBOTS]
         ],
@@ -82,6 +85,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
             vol.Optional(ATTR_NAVIGATION, default=1): cv.positive_int,
             vol.Optional(ATTR_CATEGORY, default=4): cv.positive_int,
             vol.Optional(ATTR_ZONE): cv.string,
+            vol.Optional(ATTR_MAP): cv.string,
         },
         "vorwerk_custom_cleaning",
     )
@@ -91,7 +95,7 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
     """Representation of a Vorwerk Connected Vacuum."""
 
     def __init__(
-        self, robot_state: VorwerkState, coordinator: DataUpdateCoordinator[Any]
+        self, robot_state: VorwerkState, coordinator: DataUpdateCoordinator[Any], token
     ) -> None:
         """Initialize the Vorwerk Connected Vacuum."""
         super().__init__(coordinator)
@@ -100,7 +104,8 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
 
         self._name = f"{self.robot.name}"
         self._robot_serial = self.robot.serial
-        self._robot_boundaries: list = []
+        self._robot_boundaries: list[str] = []
+        self._token = token
 
     @property
     def name(self) -> str:
@@ -214,24 +219,89 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
             )
 
     def vorwerk_custom_cleaning(
-        self, mode: str, navigation: str, category: str, zone: str | None = None
+        self, mode: str, navigation: str, category: str, zone: str, map: str | None = None
     ) -> None:
         """Zone cleaning service call."""
+        _LOGGER.debug("vorwerk_custom_cleaning called for %s / %s with token %s", map, zone, self._token)
+
+        # create Vorwerk API session + account object and populate the robot list
+        # (this necessary to update pybotvac internal states)
+        session = PasswordlessSession(client_id=VORWERK_CLIENT_ID, token=self._token)
+        account = Account(session)
+        robots = account.robots
+
+        _LOGGER.debug("  Robot list = %s", robots)
+
+        map_id = None
         boundary_id = None
-        if zone is not None:
-            for boundary in self._robot_boundaries:
-                if zone in boundary["name"]:
-                    boundary_id = boundary["id"]
-            if boundary_id is None:
-                _LOGGER.error(
-                    "Zone '%s' was not found for the robot '%s'", zone, self.entity_id
-                )
+
+        if map is not None:
+            # search map
+            maps = account.persistent_maps[self._robot_serial]
+
+            _LOGGER.debug("  Persistent map list = %s", maps)
+
+            map_obj = None
+            available_maps = []
+            for m in maps:
+                available_maps.append(m['name'])
+                if map in m['name']:
+                    map_obj = m
+
+            if map_obj is None:
+                _LOGGER.error("Map '%s' was not found for the robot '%s', list of valid maps: %s", map, self.entity_id, available_maps)
                 return
-            _LOGGER.info("Start cleaning zone '%s' with robot %s", zone, self.entity_id)
+
+            map_id = map_obj['id']
+            _LOGGER.debug("  Found map %s = ID %s", map, map_id)
+
+            if zone is not None:
+                # search zone = boundary ID 
+                boundaries = self.robot.get_map_boundaries(map_id).json()
+
+                _LOGGER.debug("  Boundary list = %s", boundaries)
+
+                boundary_obj = None
+                available_zones = []
+                for b in boundaries['data']['boundaries']:
+                    available_zones.append(b['name'])
+                    if zone in b['name']:
+                        boundary_obj = b
+
+                if boundary_obj is None:
+                    _LOGGER.error("Zone '%s' was not found for the robot '%s' on map '%s', list of valid zones: %s", zone, self.entity_id, map, available_zones)
+                    return
+
+                boundary_id = boundary_obj['id']
+                _LOGGER.debug("  Found baundary / zone %s = ID %s", zone, boundary_id)
+
+        # start cleaning now
+        _LOGGER.info("Start cleaning zone '%s' on map '%s' with robot %s", zone, map, self.entity_id)
 
         try:
-            self.robot.start_cleaning(mode, navigation, category, boundary_id)
+            self.robot.start_cleaning(mode, navigation, category, boundary_id, map_id)
         except NeatoRobotException as ex:
             _LOGGER.error(
                 "Vorwerk vacuum connection error for '%s': %s", self.entity_id, ex
             )
+
+
+        # TODO: OLD CODE
+#        boundary_id = None
+#        if zone is not None:
+#            for boundary in self._robot_boundaries:
+#                if zone in boundary["name"]:
+#                    boundary_id = boundary["id"]
+#            if boundary_id is None:
+#                _LOGGER.error(
+#                    "Zone '%s' was not found for the robot '%s'", zone, self.entity_id
+#                )
+#                return
+#            _LOGGER.info("Start cleaning zone '%s' with robot %s", zone, self.entity_id)
+
+#        try:
+#            self.robot.start_cleaning(mode, navigation, category, boundary_id)
+#        except NeatoRobotException as ex:
+#            _LOGGER.error(
+#                "Vorwerk vacuum connection error for '%s': %s", self.entity_id, ex
+#            )

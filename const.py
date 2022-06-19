@@ -23,6 +23,7 @@ MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=1)
 ATTR_NAVIGATION = "navigation"
 ATTR_CATEGORY = "category"
 ATTR_ZONE = "zone"
+ATTR_MAP = "map"
 
 ROBOT_STATE_INVALID = 0
 ROBOT_STATE_IDLE = 1

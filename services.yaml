@@ -16,3 +16,6 @@ custom_cleaning:
     zone:
       description: Only supported on the VR300. Name of the zone to clean. Defaults to no zone i.e. complete house cleanup.
       example: "Kitchen"
+    map:
+      description: Only supported on the VR300. Name of the map for the zone to clean. Defaults to no zone i.e. complete house cleanup.
+      example: "Ground Floor"

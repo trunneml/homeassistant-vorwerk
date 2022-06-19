@@ -8,6 +8,7 @@ from typing import Any
 from pybotvac.exceptions import NeatoException, NeatoRobotException
 from pybotvac.robot import Robot
 from pybotvac.vorwerk import Vorwerk
+from pybotvac.session import PasswordlessSession
 import voluptuous as vol
 
 from homeassistant.components.vacuum import (
@@ -24,6 +25,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.typing import ConfigType, HomeAssistantType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.const import CONF_TOKEN
 
 from .const import (
     ACTION,
@@ -97,6 +99,7 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool
             {
                 VORWERK_ROBOT_API: r,
                 VORWERK_ROBOT_COORDINATOR: _create_coordinator(hass, r),
+                CONF_TOKEN: entry.data[CONF_TOKEN]
             }
             for r in robot_states
         ]
